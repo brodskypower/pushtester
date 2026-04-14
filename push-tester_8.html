@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Push Tester</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --y:      #FED100;
+  --y2:     rgba(254,209,0,.12);
+  --bg:     #0e0e10;
+  --s1:     #17171b;
+  --s2:     #1d1d22;
+  --s3:     #252529;
+  --br:     #2a2a34;
+  --txt:    #e6e6ee;
+  --mu:     #585870;
+  --mu2:    #3e3e50;
+  --warn:   rgba(254,209,0,.24);
+  --danger: rgba(255,55,55,.22);
+  --r:      11px;
+  --rs:     7px;
+}
+
+body {
+  font-family: 'Golos Text', sans-serif;
+  background: var(--bg);
+  color: var(--txt);
+  padding: 22px 24px 52px;
+}
+
+/* ─── 3-column grid ─── */
+.layout {
+  display: grid;
+  grid-template-columns: 290px 390px 390px;
+  gap: 18px;
+  align-items: start;
+}
+
+/* ─── LEFT: inputs ─── */
+.lcol { display: flex; flex-direction: column; gap: 10px; }
+
+.card { background: var(--s1); border: 1px solid var(--br); border-radius: var(--r); }
+.cb   { padding: 13px 15px; }
+
+.frow { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
+.flabel { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--mu); }
+.fcnt   { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--mu); transition: color .15s; }
+.fcnt.w { color: var(--y); }
+.fcnt.d { color: #ff5555; }
+
+/* backdrop textarea */
+.taw { display: grid; border-radius: var(--rs); border: 1.5px solid var(--br); background: var(--s2); transition: border-color .2s; }
+.taw:focus-within { border-color: var(--y); box-shadow: 0 0 0 3px var(--y2); }
+.taw > * {
+  grid-area: 1/1;
+  font-family: 'Golos Text', sans-serif; font-size: 13px; line-height: 1.6;
+  padding: 8px 11px; white-space: pre-wrap; word-break: break-word;
+  overflow-wrap: anywhere; min-height: 38px;
+}
+.taw-bg { pointer-events: none; z-index: 1; color: transparent; overflow: hidden; }
+.taw-bg .w { background: var(--warn);   border-radius: 3px; outline: 1px solid rgba(254,209,0,.16); }
+.taw-bg .d { background: var(--danger); border-radius: 3px; outline: 1px solid rgba(255,55,55,.16); }
+.taw textarea {
+  z-index: 2; background: transparent; border: none; outline: none;
+  color: var(--txt); caret-color: var(--y); resize: none; overflow: hidden;
+  min-height: 38px; border-radius: var(--rs);
+}
+.taw textarea::placeholder { color: var(--mu2); }
+
+/* emoji */
+.emoji-row { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 8px; }
+.emoji-btn {
+  width: 29px; height: 29px; border-radius: 6px;
+  border: 1px solid var(--br); background: var(--s2);
+  font-size: 14px; cursor: pointer; display: grid; place-items: center;
+  transition: border-color .12s, transform .1s; user-select: none;
+}
+.emoji-btn:hover { border-color: var(--y); transform: scale(1.18); }
+.emoji-btn:active { transform: scale(.9); }
+
+/* legend */
+.legend { padding: 9px 15px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--br); }
+.li { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--mu); }
+.lchip { width: 20px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.lchip.w { background: var(--warn);   outline: 1px solid rgba(254,209,0,.16); }
+.lchip.d { background: var(--danger); outline: 1px solid rgba(255,55,55,.16); }
+
+/* copy */
+.copy-head { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--mu); margin-bottom: 9px; }
+.copy-row  { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 11px; border-radius: var(--rs);
+  border: 1.5px solid var(--br); background: var(--s2);
+  color: var(--txt); font-family: 'Golos Text', sans-serif;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: border-color .15s, color .15s; white-space: nowrap; user-select: none;
+}
+.btn:hover { border-color: var(--y); color: var(--y); }
+.btn.ok    { border-color: #4eaa5a; color: #4eaa5a; background: rgba(78,170,90,.07); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--mu); }
+.btn.ghost:hover { color: #ff5555; border-color: rgba(255,85,85,.28); background: transparent; }
+.btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.btn kbd { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--mu); background: var(--s3); border: 1px solid var(--br); border-radius: 3px; padding: 1px 4px; margin-left: 1px; }
+.btn:hover kbd { color: inherit; }
+
+/* compact */
+.cmpt-block { background: var(--s1); border: 1px solid var(--br); border-radius: var(--r); padding: 11px 13px; }
+.cmpt-head  { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--mu); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 7px; }
+.cmpt-row   { display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,.38); border-radius: 5px; padding: 4px 7px; margin-bottom: 3px; overflow: hidden; }
+.cmpt-ico   { width: 10px; height: 10px; background: linear-gradient(135deg,#ff7a00,#e5500a); border-radius: 2px; flex-shrink: 0; }
+.cmpt-app   { font-size: 9px; color: rgba(255,255,255,.26); white-space: nowrap; flex-shrink: 0; }
+.cmpt-sep   { font-size: 9px; color: rgba(255,255,255,.14); flex-shrink: 0; }
+.cmpt-t     { font-size: 9px; color: rgba(255,255,255,.26); white-space: nowrap; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+.cmpt-title { font-size: 9px; color: rgba(255,255,255,.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+.cmpt-title .risk { background: var(--warn); border-radius: 2px; }
+
+/* info */
+.info { background: var(--s1); border: 1px solid var(--br); border-radius: 9px; padding: 9px 12px; font-size: 10.5px; color: var(--mu); line-height: 1.6; }
+.info b { color: rgba(255,255,255,.42); font-weight: 600; }
+.info .hint { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--br); color: var(--mu2); font-size: 10px; }
+
+/* ─── PREVIEW COLUMNS ─── */
+.pcol { display: flex; flex-direction: column; gap: 14px; }
+.pcol-head { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--mu); letter-spacing: .06em; padding-bottom: 8px; border-bottom: 1px solid var(--br); margin-bottom: 0; }
+.plabel { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--mu2); letter-spacing: .05em; margin-bottom: 5px; }
+
+/* ── iOS ── */
+/* Each card is constrained to its real screen pt width */
+.notif-ios {
+  background: rgba(242,242,247,.97);
+  border-radius: 16px;
+  padding: 10px 13px 11px;
+  box-shadow: 0 5px 24px rgba(0,0,0,.55), 0 1px 3px rgba(0,0,0,.3);
+}
+.notif-ios.w320 { max-width: 268px; }   /* SE  */
+.notif-ios.w375 { max-width: 340px; }   /* X/11 */
+.notif-ios.w430 { max-width: 390px; }   /* Plus/Max */
+
+.ios-hdr { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.ios-ico  {
+  width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0;
+  background: linear-gradient(135deg,#ff7a00,#e5500a);
+}
+.ios-app  {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  font-size: 11px; font-weight: 600; color: #8e8e93;
+  text-transform: uppercase; letter-spacing: .02em; flex: 1;
+}
+.ios-time {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  font-size: 11px; color: #8e8e93; white-space: nowrap; cursor: pointer;
+  border-bottom: 1px dashed rgba(0,0,0,.14); transition: color .14s;
+}
+.ios-time:hover { color: #b89200; border-color: #b89200; }
+.ios-title {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  font-size: 15px; font-weight: 600; color: #1c1c1e; line-height: 1.25; margin-bottom: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ios-body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  font-size: 14px; color: #3a3a3c; line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ph-ios { color: #c7c7cc; font-style: italic; font-weight: 400; }
+
+/* ── Android ── */
+.notif-and {
+  background: #fff;
+  border-radius: 5px;
+  padding: 11px 14px;
+  max-width: 360px;           /* ~Android screen width */
+  box-shadow: 0 3px 18px rgba(0,0,0,.5), 0 1px 3px rgba(0,0,0,.22);
+}
+.and-hdr  { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; }
+.and-ico  { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; background: linear-gradient(135deg,#ff7a00,#e5500a); }
+.and-meta { font-family: 'Roboto', sans-serif; font-size: 11px; color: #727272; }
+.and-title { font-family: 'Roboto', sans-serif; font-size: 14px; font-weight: 500; color: #1a1a1a; line-height: 1.25; margin-bottom: 1px; }
+.and-title.c1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.and-body  { font-family: 'Roboto', sans-serif; font-size: 13px; color: #3d3d3d; line-height: 1.45; }
+.and-body.c1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.and-body.cx { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+.ph-and { color: #bbb; font-style: italic; }
+
+/* footer */
+footer {
+  margin-top: 32px; font-size: 10.5px; color: var(--mu2);
+  display: flex; justify-content: space-between;
+  border-top: 1px solid var(--br); padding-top: 12px;
+  max-width: calc(290px + 390px + 390px + 36px); /* match grid */
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ═══ LEFT ═══ -->
+  <div class="lcol">
+
+    <div class="card">
+      <div class="cb">
+        <div class="frow">
+          <span class="flabel">Заголовок</span>
+          <span class="fcnt" id="tc">0 / 23</span>
+        </div>
+        <div class="taw">
+          <div class="taw-bg" id="tb" aria-hidden="true"></div>
+          <textarea id="ti" rows="2" placeholder="Скидка 30% только сегодня"></textarea>
+        </div>
+        <div class="emoji-row" id="emoji-row"></div>
+      </div>
+      <div class="legend">
+        <div class="li"><span class="lchip w"></span>Скроется за временем в первый час (&gt;19)</div>
+        <div class="li"><span class="lchip d"></span>Обрезается и после первого часа (&gt;23)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cb">
+        <div class="frow">
+          <span class="flabel">Описание</span>
+          <span class="fcnt" id="bc">0 / 100</span>
+        </div>
+        <div class="taw">
+          <div class="taw-bg" id="bb" aria-hidden="true"></div>
+          <textarea id="bi" rows="3" placeholder="Закажи пиццу до 23:00 и получи бесплатный напиток в подарок"></textarea>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="li"><span class="lchip w"></span>Выходит за 3 строки на ~390 pt экране</div>
+      </div>
+    </div>
+
+    <div class="card cb">
+      <div class="copy-head">Скопировать</div>
+      <div class="copy-row">
+        <button class="btn" id="b-tt" onclick="doCopy('title')">
+          <svg viewBox="0 0 16 16"><rect x="5" y="5" width="9" height="9" rx="2"/><path d="M2 11V3a2 2 0 012-2h8"/></svg>Заголовок
+        </button>
+        <button class="btn" id="b-bd" onclick="doCopy('body')">
+          <svg viewBox="0 0 16 16"><rect x="5" y="5" width="9" height="9" rx="2"/><path d="M2 11V3a2 2 0 012-2h8"/></svg>Описание
+        </button>
+        <button class="btn" id="b-al" onclick="doCopy('all')">
+          <svg viewBox="0 0 16 16"><rect x="5" y="5" width="9" height="9" rx="2"/><path d="M2 11V3a2 2 0 012-2h8"/></svg>Весь пуш <kbd>⌘↵</kbd>
+        </button>
+        <button class="btn ghost" onclick="doReset()">
+          <svg viewBox="0 0 16 16"><polyline points="1,4 1,1 4,1"/><path d="M1,4 A7,7 0 1 1 1,11"/></svg>Сбросить
+        </button>
+      </div>
+    </div>
+
+    <div class="cmpt-block">
+      <div class="cmpt-head">Компактный вид · первый час</div>
+      <div class="cmpt-row">
+        <div class="cmpt-ico"></div>
+        <span class="cmpt-app">Прил.</span><span class="cmpt-sep">·</span>
+        <span class="cmpt-t">Сейчас</span><span class="cmpt-sep">·</span>
+        <span class="cmpt-title" id="ct1"><span style="color:rgba(255,255,255,.16);font-style:italic">заголовок...</span></span>
+      </div>
+      <div class="cmpt-row" style="margin-bottom:0">
+        <div class="cmpt-ico"></div>
+        <span class="cmpt-app">Прил.</span><span class="cmpt-sep">·</span>
+        <span class="cmpt-t">58&nbsp;мин.</span><span class="cmpt-sep">·</span>
+        <span class="cmpt-title" id="ct2"><span style="color:rgba(255,255,255,.16);font-style:italic">заголовок...</span></span>
+      </div>
+    </div>
+
+    <div class="info">
+      <b>Заголовок:</b> жёлтое (&gt;19) — скрывается в первый час; красное (&gt;23) — обрезается всегда.<br>
+      <b>Описание:</b> жёлтое (&gt;100) — выходит за 3 строки на ~390 pt.
+      <div class="hint">Кликните время в iOS-карточке — переключить сценарий.&nbsp;&nbsp;⌘↵ — скопировать всё.</div>
+    </div>
+
+  </div>
+
+  <!-- ═══ MIDDLE: iOS ═══ -->
+  <div class="pcol">
+    <div class="pcol-head">iOS</div>
+
+    <div>
+      <div class="plabel">iPhone SE · 320 pt</div>
+      <div class="notif-ios w320">
+        <div class="ios-hdr"><div class="ios-ico"></div><span class="ios-app">ПРИЛОЖЕНИЕ</span><span class="ios-time t-all">Сейчас</span></div>
+        <div class="ios-title" id="ios-t-se"><span class="ph-ios">Введите заголовок</span></div>
+        <div class="ios-body"  id="ios-b-se"><span class="ph-ios">Введите описание</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="plabel">iPhone X / 11 · 375 pt</div>
+      <div class="notif-ios w375">
+        <div class="ios-hdr"><div class="ios-ico"></div><span class="ios-app">ПРИЛОЖЕНИЕ</span><span class="ios-time t-all">Сейчас</span></div>
+        <div class="ios-title" id="ios-t-x"><span class="ph-ios">Введите заголовок</span></div>
+        <div class="ios-body"  id="ios-b-x"><span class="ph-ios">Введите описание</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="plabel">iPhone 8 Plus / 14 Pro Max · 414–430 pt</div>
+      <div class="notif-ios w430">
+        <div class="ios-hdr"><div class="ios-ico"></div><span class="ios-app">ПРИЛОЖЕНИЕ</span><span class="ios-time t-all">Сейчас</span></div>
+        <div class="ios-title" id="ios-t-max"><span class="ph-ios">Введите заголовок</span></div>
+        <div class="ios-body"  id="ios-b-max"><span class="ph-ios">Введите описание</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ RIGHT: Android ═══ -->
+  <div class="pcol">
+    <div class="pcol-head">Android</div>
+
+    <div>
+      <div class="plabel">Свёрнуто</div>
+      <div class="notif-and">
+        <div class="and-hdr"><div class="and-ico"></div><span class="and-meta">Приложение · <span class="t-all">сейчас</span></span></div>
+        <div class="and-title c1" id="and-t-c"><span class="ph-and">Введите заголовок</span></div>
+        <div class="and-body  c1" id="and-b-c"><span class="ph-and">Введите описание</span></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="plabel">Развёрнуто</div>
+      <div class="notif-and">
+        <div class="and-hdr"><div class="and-ico"></div><span class="and-meta">Приложение · <span class="t-all">сейчас</span></span></div>
+        <div class="and-title"    id="and-t-e"><span class="ph-and">Введите заголовок</span></div>
+        <div class="and-body cx"  id="and-b-e"><span class="ph-and">Введите описание</span></div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /layout -->
+
+<footer>
+  <span>Push Tester</span>
+  <span>title_warn=19 · title_danger=23 · body_warn=100</span>
+</footer>
+
+<script>
+const TW = 19, TD = 23, BW = 100;
+const $ = id => document.getElementById(id);
+
+function esc(c){ return c==='&'?'&amp;':c==='<'?'&lt;':c==='>'?'&gt;':c; }
+function escStr(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+
+function buildHL(text, warnAt, dangerAt){
+  let h='';
+  for(let i=0;i<text.length;i++){
+    const e=esc(text[i]);
+    if(dangerAt!==null&&i>=dangerAt) h+=`<span class="d">${e}</span>`;
+    else if(i>=warnAt)               h+=`<span class="w">${e}</span>`;
+    else                             h+=e;
+  }
+  return h;
+}
+function resize(ta){ ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px'; }
+
+function onTitle(){
+  const v=$('ti').value, n=v.length;
+  $('tb').innerHTML=buildHL(v,TW,TD);
+  resize($('ti'));
+  const c=$('tc');
+  if     (n>TD){c.textContent=`${n} (−${n-TD} лишних)`;c.className='fcnt d';}
+  else if(n>TW){c.textContent=`${n} / ${TD}`;           c.className='fcnt w';}
+  else         {c.textContent=`${n} / ${TD}`;           c.className='fcnt';}
+  updatePreview();
+}
+function onBody(){
+  const v=$('bi').value, n=v.length;
+  $('bb').innerHTML=buildHL(v,BW,null);
+  resize($('bi'));
+  const c=$('bc');
+  if(n>BW){c.textContent=`${n} (−${n-BW} лишних)`;c.className='fcnt w';}
+  else    {c.textContent=`${n} / ${BW}`;           c.className='fcnt';}
+  updatePreview();
+}
+$('ti').addEventListener('input',onTitle);
+$('bi').addEventListener('input',onBody);
+
+const EI ='<span class="ph-ios">Введите заголовок</span>';
+const EBi='<span class="ph-ios">Введите описание</span>';
+const EA ='<span class="ph-and">Введите заголовок</span>';
+const EBa='<span class="ph-and">Введите описание</span>';
+function set(id,html,em){$(id).innerHTML=html||em;}
+
+function updatePreview(){
+  const t=$('ti').value, b=$('bi').value;
+  const te=t?escStr(t):null, be=b?escStr(b):null;
+  ['ios-t-se','ios-t-x','ios-t-max'].forEach(id=>set(id,te,EI));
+  ['ios-b-se','ios-b-x','ios-b-max'].forEach(id=>set(id,be,EBi));
+  set('and-t-c',te,EA); set('and-b-c',be,EBa);
+  set('and-t-e',te,EA); set('and-b-e',be,EBa);
+
+  $('ct1').innerHTML=t?escStr(t):'<span style="color:rgba(255,255,255,.16);font-style:italic">заголовок...</span>';
+  if(t){
+    if(t.length>TW){
+      let h='';
+      for(let i=0;i<t.length;i++){const e=esc(t[i]); h+=i<TW?e:`<span class="risk">${e}</span>`;}
+      $('ct2').innerHTML=h;
+    } else { $('ct2').textContent=t; }
+  } else {
+    $('ct2').innerHTML='<span style="color:rgba(255,255,255,.16);font-style:italic">заголовок...</span>';
+  }
+}
+
+// timestamp cycle
+const TIMES=['Сейчас','2 мин.','15 мин.','58 мин.','1 ч.','14:35','Вчера'];
+let tIdx=0;
+document.querySelectorAll('.ios-time.t-all').forEach(el=>{
+  el.title='Нажмите — переключить время';
+  el.addEventListener('click',()=>{
+    tIdx=(tIdx+1)%TIMES.length;
+    document.querySelectorAll('.t-all').forEach(x=>x.textContent=TIMES[tIdx]);
+  });
+});
+
+async function doCopy(what){
+  const t=$('ti').value, b=$('bi').value;
+  const text=what==='title'?t:what==='body'?b:[t,b].filter(Boolean).join('\n');
+  if(!text.trim())return;
+  const ids={title:'b-tt',body:'b-bd',all:'b-al'};
+  const btn=$(ids[what]);
+  try{await navigator.clipboard.writeText(text);}
+  catch{const x=Object.assign(document.createElement('textarea'),{value:text});document.body.appendChild(x);x.select();document.execCommand('copy');x.remove();}
+  btn.classList.add('ok');
+  const orig=btn.innerHTML;
+  btn.innerHTML=btn.innerHTML.replace(/Заголовок|Описание|Весь пуш/,'✓ Скопировано').replace(/<kbd>.*?<\/kbd>/,'');
+  setTimeout(()=>{btn.classList.remove('ok');btn.innerHTML=orig;},1800);
+}
+
+function doReset(){
+  ['ti','bi'].forEach(id=>{$(id).value='';resize($(id));});
+  ['tb','bb'].forEach(id=>$(id).innerHTML='');
+  $('tc').textContent=`0 / ${TD}`;$('tc').className='fcnt';
+  $('bc').textContent=`0 / ${BW}`;$('bc').className='fcnt';
+  updatePreview();
+}
+
+// emoji
+const EMOJIS=[
+  {e:'👀',l:'глаза'},{e:'🎁',l:'подарок'},{e:'🔥',l:'огонь'},{e:'✨',l:'искры'},
+  {e:'⚡',l:'молния'},{e:'🎉',l:'праздник'},{e:'🌟',l:'звезда'},{e:'💥',l:'взрыв'},
+  {e:'🪄',l:'магия'},{e:'🎊',l:'конфетти'},{e:'💫',l:'вспышка'},{e:'🛒',l:'корзина'},
+  {e:'💰',l:'деньги'},{e:'🎀',l:'бантик'},{e:'❤️',l:'сердце'},
+];
+EMOJIS.forEach(({e,l})=>{
+  const btn=document.createElement('button');
+  btn.className='emoji-btn';btn.textContent=e;btn.title=l;btn.type='button';
+  btn.addEventListener('click',()=>{
+    const ta=$('ti'),s=ta.selectionStart,en=ta.selectionEnd;
+    ta.value=ta.value.slice(0,s)+e+ta.value.slice(en);
+    ta.setSelectionRange(s+e.length,s+e.length);ta.focus();onTitle();
+  });
+  $('emoji-row').appendChild(btn);
+});
+
+document.addEventListener('keydown',ev=>{
+  if((ev.ctrlKey||ev.metaKey)&&ev.key==='Enter'){ev.preventDefault();doCopy('all');}
+});
+</script>
+</body>
+</html>
